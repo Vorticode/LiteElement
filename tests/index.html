@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title></title>
+	<style>
+		body {background-color: #111; color: #ddd; font: 14px Consolas;
+		}
+		table { border-collapse: collapse }
+		td { vertical-align: top; padding: 0; white-space: normal }
+		td:first-child { white-space: nowrap }
+		label { user-select: none }
+	</style>
+</head>
+
+<body>
+<script type="module">
+	import Testimony from './Testimony.js';
+	import './LiteElement.test.js';
+
+	Testimony.runTests(document.getElementById('tests'));
+</script>
+	<form>
+		<table id="tests"></table>
+
+		<button>Run Tests</button>
+	</form>
+</body>
+
+</html>
+

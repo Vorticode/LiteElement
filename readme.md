@@ -4,32 +4,32 @@ An extremely lightweight (About 1KB gzipped) JavaScript web component library ma
 
 ```javascript
 class InventoryList extends LiteElement {
-	addItem() {
+    addItem() {
         // this.items is a class property created by id="items" in the html.
-		this.items.append(this.createEl(`
-			<tr oninput="this.updateResult()">
-				<td><input name="name"></td>
-				<td><input name="qty" type="number"></td>
-				<td>
-					<button onclick="el.closest('tr').remove(); this.updateResult()">X</button>
-				</td>
-			</tr>
-		`));
-		this.updateResult();
-	}
+        this.items.append(this.createEl(`
+            <tr oninput="this.updateResult()">
+                <td><input name="name"></td>
+                <td><input name="qty" type="number"></td>
+                <td>
+                    <button onclick="el.closest('tr').remove(); this.updateResult()">X</button>
+                </td>
+            </tr>
+        `));
+        this.updateResult();
+    }
 
-	updateResult() { // Create an array of objects, basted on input field names.
-		let values = Array.from(this.items.children).map(LiteElement.getValues);
-		this.result.innerHTML = JSON.stringify(values, null, 4);
-	}
+    updateResult() { // Create an array of objects, basted on input field names.
+        let values = Array.from(this.items.children).map(LiteElement.getValues);
+        this.result.innerHTML = JSON.stringify(values, null, 4);
+    }
 }
 InventoryList.html = `
     <inventory-list>
         <button onclick="this.addItem()">Add Item</button>
         <table id="items">
             <tr><th>Name</th><th>Qty</th></tr>
-		</table>
-		<div id="result" style="white-space: pre"></div>
+        </table>
+        <div id="result" style="white-space: pre"></div>
     </inventory-list>`;
 
 document.body.append(new InventoryList());
@@ -94,8 +94,8 @@ Events can be used via the conventional `on` attributes.  The event code is give
 
 ```javascript
 class Car extends LiteElement {
-	honk(event, el) {
-    	console.log(`${event.type} happened on ${el.tagName}.`);
+    honk(event, el) {
+        console.log(`${event.type} happened on ${el.tagName}.`);
     }
 }
 Car.html = `
@@ -115,13 +115,13 @@ If the `shadow` attribute is present on a LiteElement or any of its children, an
 ```javascript
 class FancyText extends LiteElement {}
 FancyText.html = `
-	<fancy-text>
-		<style>
-			:host { border: 10px dashed red }
-			p { text-shadow: 0 0 5px orange }
-		</style>
-		<p>Fancy text!</p>
-	</fancy-text>`;
+    <fancy-text>
+        <style>
+            :host { border: 10px dashed red }
+            p { text-shadow: 0 0 5px orange }
+        </style>
+        <p>Fancy text!</p>
+    </fancy-text>`;
 ```
 
 ## Nesting
