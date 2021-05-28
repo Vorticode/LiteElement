@@ -1,0 +1,1 @@
+terser --compress --mangle -- LiteElement.js > LiteElement.min.js
