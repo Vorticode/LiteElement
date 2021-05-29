@@ -18,7 +18,7 @@ class InventoryList extends LiteElement {
 	}
 
 	updateResult() { // Create an array of objects, basted on input field names.
-		let values = Array.from(this.items.children).map(LiteElement.getValues).filter(x=>Object.keys(x).length);
+		let values = Array.from(this.items.children).map(LiteElement.getValues);
 		this.result.innerHTML = JSON.stringify(values, null, 4);
 	}
 }
