@@ -53,10 +53,10 @@ document.body.append(inv);
 
 Features:
 
-- No custom build steps and zero dependencies, not even Node..  Just include LiteElement.js or LiteElement.min.js.
-- Doesn't take over your whole project.  Place it within standard DOM nodes only where you need it.
+- No custom build steps and zero dependencies, not even Node.  Just include LiteElement.js or LiteElement.min.js.
 - Uses standard, native html and JavaScript.  No need to learn another template or markup language.
-- Use all standard DOM operations such as `append()`, `remove()` and `childNodes` to view and manipulate child nodes.
+    - Doesn't take over your whole project.   Place it within standard DOM nodes only where you need it.
+    - Use built-in DOM operations such as `append()`, `remove()` and `childNodes` to view and manipulate child nodes.
 - Can use shadow DOM, events, and slots.
 - MIT license.  Free for commercial use.
 
@@ -149,7 +149,7 @@ If the `shadow` attribute is present on a LiteElement or any of its children, an
 ```javascript
 class FancyText extends LiteElement {}
 FancyText.html = `
-    <fancy-text>
+    <fancy-text shadow>
         <style>
             :host { border: 10px dashed red }
             p { text-shadow: 0 0 5px orange }
