@@ -1,3 +1,4 @@
+
 /**
  * LiteElement.js
  * License: MIT
@@ -30,7 +31,7 @@
  * 		}
  * 	});
  * 	observer.observe(document.body, {childList: true, subtree: true}); */
-export default class LiteElement extends HTMLElement {
+class LiteElement extends HTMLElement {
 
 	constructor() {
 		super();
@@ -60,17 +61,18 @@ export default class LiteElement extends HTMLElement {
 		//    Find all on... attributes, remove them, and addEventListener their corresponding event.
 		//    This allows them to use the "this" context to refer to the class instead of their own element.
 		if (constructor.hasEvents_)
-			LiteElement.activateEvents(this, this);
+			LiteElement.activateEvents_(this, this);
 
 		// 4. Assign ids
 		for (let el of this.querySelectorAll('[id], [data-id]')) {
 			if (LiteElement.getLiteParent(el) === this) {
+				let id = el.id || el.dataset.id;
 				//#IFDEV
-				if (this[el.id || el.dataset.id])
-					throw new Error(`Can't create new property on <${this.tagName.toLowerCase()}> via the attribute id="${el.id || el.dataset.id}" because the .${el.id || el.dataset.id} property already has a value.`);
+				if (this[id])
+					throw new Error(`Can't create new property on <${this.tagName.toLowerCase()}> via id="${id}" because the ${id} property already has a value.`);
 				//#ENDIF
 
-				this[el.id || el.dataset.id] = el; // for when multiple instances will be created that don't have the id elements within shadow dom.
+				this[id] = el; // for when multiple instances will be created that don't have the id elements within shadow dom.
 			}
 		}
 
@@ -104,7 +106,7 @@ export default class LiteElement extends HTMLElement {
 	 * @returns {HTMLElement|Node} */
 	createEl(html, trim=true) {
 		let el = createEl(html, trim);
-		LiteElement.activateEvents(this, el);
+		LiteElement.activateEvents_(this, el);
 		return el;
 	}
 }
@@ -128,12 +130,35 @@ LiteElement.getValues = el => {
 	let result = {};
 	for (let input of (el.shadowRoot || el).querySelectorAll('[name]')) {
 		let name = input.getAttribute('name');
-		if (name in result)
-			result[name] = [result[name], input.value].flat();
+		if (!['false', null].includes(input.getAttribute('contentEditable')))
+			var val =  input.innerHTML;
+		else if (input.type === 'checkbox')
+			val = input.checked
 		else
-			result[name] = input.value;
+			val = input.value
+
+		if (name in result) // Make array
+			result[name] = [result[name], val].flat();
+		else
+			result[name] = val;
 	}
 	return result;
+}
+
+/**
+ * @param el {HTMLElement}
+ * @param values {object} */
+LiteElement.setValues = (el, values) => {
+	el = el.shadowRoot || el;
+	for (let name in values)
+		for (let input of el.querySelectorAll('[name="'+name+'"]'))
+			if (!['false', null].includes(input.getAttribute('contentEditable')))
+				input.innerHTML = values[name];
+			else if (input.type === 'checkbox')
+				input.checked = values[name];
+			else
+				input.value = values[name];
+
 }
 
 /**
@@ -141,7 +166,7 @@ LiteElement.getValues = el => {
  * Separated so we can activate events on dynamically added children.
  * @param liteElement {LiteElement}
  * @param el {HTMLElement} */
-LiteElement.activateEvents = (liteElement, el) => {
+LiteElement.activateEvents_ = (liteElement, el) => {
 	[el, ...el.querySelectorAll('*')].map(el =>
 		[...el.attributes].filter(isEvent_).map(attr =>
 			//el.removeAttribute(attr.name); // no need to remove it.
@@ -156,18 +181,18 @@ Object.defineProperty(LiteElement, 'html', {
 	 * Execultes only once per class definition, not instantiation. */
 	set: function(html) {
 		// Parse out the inner html
-		referenceDiv.innerHTML = html.trim();
-		let el = referenceDiv.firstChild
+		referenceDiv_.innerHTML = html.trim();
+		let el = referenceDiv_.firstChild
 		this.children_ = el.childNodes;
 
 		// Save features to create in constructor
 		// Calculating these once redues the time it takes to create each instance.
 		this.hasSlots_ = el.querySelector('slot');
-		this.hasEvents_ = [...referenceDiv.querySelectorAll('*')].filter(el =>
+		this.hasEvents_ = [...referenceDiv_.querySelectorAll('*')].filter(el =>
 			[...el.attributes].filter(isEvent_).length
 		).length;
-		this.hasShadow_ = referenceDiv.querySelector('[shadow]');
-		this.ids_ = [...referenceDiv.querySelectorAll('*')]
+		this.hasShadow_ = referenceDiv_.querySelector('[shadow]');
+		this.ids_ = [...referenceDiv_.querySelectorAll('*')]
 
 		/** @type {object<string, string>} Save attributes*/
 		this.attribs_ = {};
@@ -179,31 +204,46 @@ Object.defineProperty(LiteElement, 'html', {
 	}
 });
 
-let isEvent_ = attr => attr.name.startsWith('on') && attr.name in referenceDiv; // Having this separate increases the gzip size by 4 bytes.
-let referenceDiv = document.createElement('div');
+let isEvent_ = attr => attr.name.startsWith('on') && attr.name in referenceDiv_; // Having this separate increases the gzip size by 4 bytes.
+let template_ = document.createElement('template');
+let referenceDiv_ = document.createElement('div');
+let createElCache_ = {};
 
-var createElCache = {};
-var template = document.createElement('template');
+/**
+ * @param html {string|HTMLTemplateElement}
+ * @param trim {boolean=true}
+ * @return {HTMLElement|Node} */
+function createEl(html, trim = true) {
+	if (html.tagName === 'TEMPLATE') {
+		if (trim)
+			return html.content.children[0].cloneNode(true);
+		else
+			return html.content.firstChild.cloneNode(true);
+	}
 
-function createEl(html, trim=true) {
 
 	// Get from cache
 	if (trim)
 		html = html.trim();
-	let existing = createElCache[html];
+	let existing = createElCache_[html];
 	if (existing)
 		return existing.cloneNode(true);
 
 	// Create
-	template.innerHTML = html;
+	template_.innerHTML = html;
 
 	// Cache
 	// We only cache the html if there are no slots.
 	// Because if we use cloneNode with a custom element that has slots, it will take all of the regular, non-slot
 	// children of the element and insert them into the slot.
-	if (!template.content.querySelector('slot'))
-		createElCache[html] = template.content.firstChild.cloneNode(true);
+	let c = template_.content;
+	if (!c.querySelector('slot'))
+		createElCache_[html] = c.firstChild.cloneNode(true);
 
-	return template.content.removeChild(template.content.firstChild);
-};
+	return c.removeChild(c.firstChild);
+}
 
+
+
+
+export default LiteElement;

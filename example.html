@@ -1,9 +1,33 @@
 <script type="module">
 	import LiteElement from './LiteElement.js';
 
-	class InventoryList extends LiteElement {
-		addItem() {
-			this.items.append(this.createEl(`
+class InventoryList extends LiteElement {
+	constructor(items=[]) {
+		super();
+		for (let item of items) {
+			let tr = this.createEl(this.itemRow);
+			LiteElement.setValues(tr, item);
+			this.items.append(tr);
+		}
+		this.updateResult();
+	}
+
+	addItem() {
+		this.items.append(this.createEl(this.itemRow));
+		this.updateResult();
+	}
+
+	updateResult() { // Create an array of objects, basted on input field names.
+		let values = Array.from(this.items.children).map(LiteElement.getValues).filter(x=>Object.keys(x).length);
+		this.result.innerHTML = JSON.stringify(values, null, 4);
+	}
+}
+InventoryList.html = `
+	<inventory-list>
+		<button onclick="this.addItem()">Add Item</button>
+		<table>
+			<tr><th>Name</th><th>Qty</th></tr>
+			<template id="itemRow">
 				<tr oninput="this.updateResult()">
 					<td><input name="name"></td>
 					<td><input name="qty" type="number"></td>
@@ -11,23 +35,17 @@
 						<button onclick="el.closest('tr').remove(); this.updateResult()">X</button>
 					</td>
 				</tr>
-			`));
-			this.updateResult();
-		}
+			</template>
+			<tbody id="items"></tbody>
+		</table>
+		<div id="result" style="white-space: pre"></div>
+	</inventory-list>`;
 
-		updateResult() { // Create an array of objects, basted on input field names.
-			let values = Array.from(this.items.children).map(LiteElement.getValues);
-			this.result.innerHTML = JSON.stringify(values, null, 4);
-		}
-	}
-	InventoryList.html = `
-		<inventory-list>
-			<button onclick="this.addItem()">Add Item</button>
-			<table id="items">
-				<tr><th>Name</th><th>Qty</th></tr>
-			</table>
-			<div id="result" style="white-space: pre"></div>
-		</inventory-list>`;
 
-	document.body.append(new InventoryList());
+// Instantiate and add
+let inv = new InventoryList([
+	{name: 'Rope', qty: 3},
+	{name: 'Shovels', qty: 7}
+]);
+document.body.append(inv);
 </script>

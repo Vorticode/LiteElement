@@ -1,1 +1,1 @@
-terser --compress --mangle -- LiteElement.js > LiteElement.min.js
+terser --compress  --toplevel --mangle-props regex="/_$/" -- LiteElement.js > LiteElement.min.js

@@ -1,50 +1,66 @@
 # LiteElement
 
-An extremely lightweight (About 1KB gzipped) JavaScript web component library making it easy to create HTML user interface components:
+An extremely lightweight (About 1KB gzipped) JavaScript web component library making it easy to create HTML user interface components.
 
 ```javascript
 class InventoryList extends LiteElement {
+    constructor(items=[]) {
+        super();
+        for (let item of items) {
+            let tr = this.createEl(this.itemRow);
+            LiteElement.setValues(tr, item);
+            this.items.append(tr);
+        }
+        this.updateResult();
+    }
+
     addItem() {
-        // this.items is a class property created by id="items" in the html.
-        this.items.append(this.createEl(`
-            <tr oninput="this.updateResult()">
-                <td><input name="name"></td>
-                <td><input name="qty" type="number"></td>
-                <td>
-                    <button onclick="el.closest('tr').remove(); this.updateResult()">X</button>
-                </td>
-            </tr>
-        `));
+        this.items.append(this.createEl(this.itemRow));
         this.updateResult();
     }
 
     updateResult() { // Create an array of objects, basted on input field names.
-        let values = Array.from(this.items.children).map(LiteElement.getValues);
+        let values = Array.from(this.items.children).map(LiteElement.getValues).filter(x=>Object.keys(x).length);
         this.result.innerHTML = JSON.stringify(values, null, 4);
     }
 }
 InventoryList.html = `
     <inventory-list>
         <button onclick="this.addItem()">Add Item</button>
-        <table id="items">
+        <table>
             <tr><th>Name</th><th>Qty</th></tr>
+            <template id="itemRow">
+                <tr oninput="this.updateResult()">
+                    <td><input name="name"></td>
+                    <td><input name="qty" type="number"></td>
+                    <td>
+                        <button onclick="el.closest('tr').remove(); this.updateResult()">X</button>
+                    </td>
+                </tr>
+            </template>
+            <tbody id="items"></tbody>
         </table>
         <div id="result" style="white-space: pre"></div>
     </inventory-list>`;
 
-document.body.append(new InventoryList());
+// Instantiate and add
+let inv = new InventoryList([
+    {name: 'Rope', qty: 3},
+    {name: 'Shovels', qty: 7}
+]);
+document.body.append(inv);
 ```
 
 Features:
 
-- No custom build steps and zero dependencie, not even Node..  Just include LiteElement.js or LiteElement.min.js.
+- No custom build steps and zero dependencies, not even Node..  Just include LiteElement.js or LiteElement.min.js.
 - Doesn't take over your whole project.  Place it within standard DOM nodes only where you need it.
 - Uses standard, native html and JavaScript.  No need to learn another template or markup language.
 - Use all standard DOM operations such as `append()`, `remove()` and `childNodes` to view and manipulate child nodes.
 - Can use shadow DOM, events, and slots.
 - MIT license.  Free for commercial use.
 
-Notice that LiteElement does not support data binding.  This is done manually via simple helper functions, for improved performance.
+Notice that LiteElement does not support data binding.  This is done manually via DOM and LiteElement helper functions, which gives increased performance and allows finer-grained control.
 
 ## Minimal Example
 
@@ -65,11 +81,11 @@ Note we can also instantiate the element directly in html:
 <l-hello></l-hello>
 ```
 
-Subsequent examples omit the  `import LiteElement` code for brevity.
+The other examples omit the  `import LiteElement` code for brevity.
 
 ## Ids
 
-Any element in the html with an id is automatically bound to a property with the same name on the class instance:
+Any element in the html with an id attribute is automatically bound to a property with the same name on the LiteElement class instance:
 
 ```javascript
 class Car extends LiteElement {}
@@ -108,22 +124,6 @@ var car = new Car();
 
 In the example above, clicking the button will print `click happened on BUTTON.`
 
-## Shadow DOM
-
-If the `shadow` attribute is present on a LiteElement or any of its children, any child nodes will be created as as [ShadowDOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).  This allows styles to be embedded that only apply to the html of the LiteElement.  The *:host* selector is used to style the element itself, per the ShadowDOM specification.
-
-```javascript
-class FancyText extends LiteElement {}
-FancyText.html = `
-    <fancy-text>
-        <style>
-            :host { border: 10px dashed red }
-            p { text-shadow: 0 0 5px orange }
-        </style>
-        <p>Fancy text!</p>
-    </fancy-text>`;
-```
-
 ## Nesting
 
 LiteElements can also be embedded within the html of other LiteElements :
@@ -140,6 +140,22 @@ Car.html = `
         <l-wheel></l-wheel>
         <l-wheel></l-wheel>
     </l-car>`;
+```
+
+## Shadow DOM
+
+If the `shadow` attribute is present on a LiteElement or any of its children, any child nodes will be created as as [ShadowDOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).  This allows styles to be embedded that only apply to the html of the LiteElement.  The *:host* selector is used to style the element itself, per the ShadowDOM specification.
+
+```javascript
+class FancyText extends LiteElement {}
+FancyText.html = `
+    <fancy-text>
+        <style>
+            :host { border: 10px dashed red }
+            p { text-shadow: 0 0 5px orange }
+        </style>
+        <p>Fancy text!</p>
+    </fancy-text>`;
 ```
 
 ## Slots
@@ -196,6 +212,10 @@ This function will convert any html to DOM nodes, and any event attributes will 
 ### static getValues(el:HTMLElement) : object
 
 Find all elements with a name attribute within `el` and return them as an object that maps those names to their value properties.  This is useful for getting all form field names and values.  The Inventory List example above shows its use.
+
+### static setValues(el:HTMLElement, values:object) 
+
+Find all elements with a name attribute within `el` that match a name key in the values object, and set their value to that value.
 
 
 
